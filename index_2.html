@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>밀리초 카운트다운 시계</title>
+    <style>
+body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .container {
+    width: 1700px;
+    height: 931px;
+    display: flex;
+    background-color:#FFA07A;
+    /* background-image: url(back.png); */
+    justify-content: center;
+    /* align-items: center; */
+    margin: 0 auto;
+    }
+
+.shape {
+  width: 0;
+  height: 0;
+  position: absolute;
+  border-left: 50px solid transparent;
+  border-right: 50px solid transparent;
+  border-bottom: 100px solid #3498db;
+  animation-duration: 2s;
+  animation-timing-function: ease-in-out;
+  animation-fill-mode: forwards;
+  opacity: 1;
+}
+
+@keyframes fallAndRotate {
+  0% {
+    transform: translateY(1000px) translateX(50px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0px) translateX(50px) rotate(360deg);
+    border-radius: 50%;
+    opacity: 0;
+  }
+}
+    </style>
+</head>
+<body>
+  <div class="container">
+    <div id="shapes-container"></div>
+    <div id="timer"></div>
+  </div>
+    <script>
+        var elapsedTime = 0;
+        var timeLiSn = 0;
+        var colorLiSn = 0;
+        var esss1 = -1;
+        const timeLi = [
+            2701,
+            2721,
+            4411,
+            4431,
+            5231,
+            5250,
+            6121,
+            6151,
+            7870,
+            7900,
+            8741,
+            8741,
+            9570,
+            9570,
+            11000,
+            11000,
+            11311,
+            11330,
+            13061,
+            13071,
+            13881,
+            13900,
+            14811,
+            14841,
+            16561,
+            16572,
+            17411,
+            17411,
+            18301,
+            18322
+        ];
+        const XLi = [
+            50,
+            550,
+            50,
+            550,
+            50,
+            550,
+            550,
+            50,
+            150,
+            450,
+            150,
+            450,
+            150,
+            450,
+            250,
+            350,
+            50,
+            550,
+            50,
+            550,
+            50,
+            550,
+            50,
+            550,
+            150,
+            450,
+            150,
+            450,
+            250,
+            350
+        ]
+        const colorLi = ['#FFD1DC', '#A2FFB5', '#E0B0FF', '#AEDFF7'];
+        const shapesContainer = document.getElementById('shapes-container');
+
+        function timeLoop() {
+            const nextInterval = timeLi[timeLiSn];
+            const nextIntervalSn = timeLiSn;
+            // const nextIntervalSn = shootingSn[shootingIndex];
+            if(esss1 != nextIntervalSn && elapsedTime > nextInterval){
+                esss1 = nextIntervalSn;
+                timeLiSn = timeLiSn + 1;
+                if(colorLiSn > 2){
+                    colorLiSn = 0
+                }else{
+                    colorLiSn = colorLiSn +1;
+                }
+                console.log(esss1);
+                createTriangle(XLi[esss1],colorLi[colorLiSn]);
+            }
+        }
+
+        setInterval(timeLoop, 10);
+
+        function createTriangle(leftPosition,backgroundColor) {
+        const triangle = document.createElement('div');
+        const triangle_2 = document.createElement('div');
+        triangle.classList.add('shape');
+        triangle_2.classList.add('shape');
+        shapesContainer.appendChild(triangle);
+        shapesContainer.appendChild(triangle_2);
+
+        triangle.style.animationName = 'fallAndRotate';
+        triangle.style.left = leftPosition + 'px';
+        triangle.style.borderColor = backgroundColor;
+
+        triangle_2.style.animationName = 'fallAndRotate';
+        triangle_2.style.left = leftPosition+1050 + 'px';
+        triangle_2.style.borderColor = backgroundColor;
+
+        setTimeout(() => {
+            // timeLiSn = timeLiSn + 1;
+            triangle.remove();
+            triangle_2.remove();
+            }, 2000); // 애니메이션 시간과 동일한 시간 이후에 요소를 삭제
+        }
+
+
+        const startTime = Date.now();
+      function updateTimer() {
+        // 시작 시간을 밀리초로 설정
+        const currentTime = Date.now();
+        elapsedTime = currentTime - startTime;
+      
+
+        // 시간을 표시할 요소 가져오기
+        const timerElement = document.getElementById("timer");
+        timerElement.textContent = `${elapsedTime.toString().padStart(6, '0')}`;
+      }
+
+      // 10밀리초마다 시계 업데이트
+      setInterval(updateTimer, 10);
+    </script>
+</body>
+</html>

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>간단한 리겜</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+    }
+
+    .hidden-canvas {
+    display: none;
+    }
+
+    .custom-button {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 10px;
+    background-color: #007bff;
+    color: #fff;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+    }
+
+    .custom-button.checked {
+    background-color: #0056b3;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
+</head>
+<body>
+  <!-- <button onclick="startGame()">시작</button> -->
+  <canvas id="gameCanvas" class="hidden-canvas" width="700" height="600"></canvas>
+
+  <!-- 배경음악을 위한 Audio 요소 추가 -->
+  <div id = "internetB" class="custom-button">인터넷걸</div>
+  <div id = "beatB" class="custom-button">그냥 무료브금</div>
+  <div id = "hellB" class="custom-button">헬테이커</div>
+  <div id = "beB" class="custom-button">라 트라비아타 17초</div>
+  <!-- <input type="file" id="file-input"> -->
+  <!-- <div id="output"></div> -->
+
+  <audio id="internet" src="internet.mp3" loop></audio>
+  <audio id="beat" src="beat.mp3" loop></audio>
+  <audio id="hell" src="hell.mp3" loop></audio>
+  <audio id="be" src="be.mp3" loop></audio>
+
+  <div style="display: block;">
+    <div id="start" class="custom-button">시작</div>
+    <div id="end" class="custom-button">저장</div>
+  </div>
+
+  <div style="display: block;">
+    <div style="background-color: red;" id="ggo" class="custom-button">게임하러가기</div>
+    <div id="timer">0.000</div>
+  </div>
+</body>
+
+
+  <script>
+    var elapsedTime = 0;
+
+    var IMusic = 'beat';
+
+    var keydownA = false;
+
+    // Audio 객체 생성
+    const tickSound = new Audio();
+
+    // 리소스 설정
+    tickSound.src = "TickSound.mp3";
+    
+    const start = document.getElementById('start');
+    const end = document.getElementById('end');
+    var b_img = new Image();
+    b_img.src = 'dance/dance3.png';
+
+    //틀 이미지
+    var tl = new Image();
+    tl.src = 'dance/tl.png';
+
+    //상태(state)이미지
+    // var state_img = new Image();
+    // state_img.src = 'dance/bad.png';
+    // state_img.src = 'dance/good.png';
+    
+    // 캔버스 요소 가져오기
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    var background = {
+    x : 0,
+    y : 0,
+    width : 800,
+    height : 600,
+    draw(){
+        ctx.fillStyle = 'green';
+        ctx.fillRect(this.x,this.y,this.width,this.height);
+        ctx.drawImage(b_img,0,0);
+      }
+    }
+
+    // var state = {
+    // x : canvas.width/2 ,
+    // y : canvas.height/2 ,
+    // width : 100,
+    // height : 50,
+    // draw(score){
+    //   console.log(score);
+    //   if (200 < score && score < 500){
+    //     state_img.src = 'dance/good.png';
+    //     ctx.drawImage(state_img,this.x,this.y);
+    //   }else{
+    //     state_img.src = 'dance/bad.png';
+    //     ctx.drawImage(state_img,this.x,this.y);
+    //   }
+    //   }
+    // }
+
+    // 플레이어 객체 생성
+    const player = {
+      x: canvas.width / 7 - 50,
+      y: canvas.height - 50,
+      width: 30,
+      height: 30,
+      color: 'blue',
+      speed: 5,
+    };
+
+    // 상대 플레이어 객체 생성
+    const pPlayer = {
+      x: canvas.width / 7 - 50,
+      y: 50,
+      width: 30,
+      height: 30,
+      color: 'red',
+      speed: 5,
+    };
+
+    //첫번째에 767추가 2727-767 = 1960 + 100
+    var shootingIntervals = []
+    // 2060, 1681, 926, 2579, 850, 942, 1730, 24, 1683, 36, 862, 13, 822, 8, 1728, 29, 777, 29, 821, 40,50000
+    var shootingX = [];
+    // 550, 450, 350, 50, 150, 250, 50, 550, 150, 450, 50, 550, 450, 150, 50, 550, 150, 450, 250, 350,50000
+    let shootingIndex = 0;
+
+
+    //노트찍을때만
+    let lastShootMinute = 0;
+    let lastShootSecond = 0;
+    let lastShootSsecond = 0;
+
+    // 총알 배열
+    const bullets = [];
+  
+    // 상대 총알 배열
+    const p_bullets = [];
+ 
+
+    // 노트 배열
+    const note = [];
+    const noteX = [];
+    const noteSn = [];
+
+    //score
+    var score = 0
+    const scores = [];
+
+    // 키보드 입력 처리
+    const keys = {};
+      window.addEventListener('keydown', (e) =>{
+      // keys[e.code] = true;
+        if (e.code === 'KeyA' && keydownA) {
+            player.x = 50;
+            playerShoot();
+            b_img.src = 'dance/dance1.png';
+          }
+          if (e.code === 'KeyS' && keydownA) {
+            player.x = 150;
+            playerShoot();
+            b_img.src = 'dance/dance2.png';
+          }
+          if (e.code === 'KeyD' && keydownA) {
+            player.x = 250;
+            playerShoot();
+            b_img.src = 'dance/dance3.png';
+          }
+          if (e.code === 'KeyJ' && keydownA) {
+            player.x = 350;
+            playerShoot();
+            b_img.src = 'dance/dance3.png';
+          }
+          if (e.code === 'KeyK' && keydownA) {
+            player.x = 450;
+            playerShoot();
+            b_img.src = 'dance/dance4.png';
+          }
+          if (e.code === 'KeyL' && keydownA) {
+            player.x = 550;
+            playerShoot();
+            b_img.src = 'dance/dance5.png';
+          }
+      } )
+    // window.addEventListener('keyup', (e) => keys[e.code] = false);
+
+    // 스페이스바를 누를 때마다 플레이어가 총알을 발사하도록 설정
+  
+
+    // 총알 생성 함수
+    function createBullet(x, y) {
+      bullets.push({ x, y, width: 100, height: 10, color: 'red', speed: 10 });
+    }
+
+     // 상대 총알 생성 함수
+     function createPBullet(x, y) {
+      p_bullets.push({ x, y, width: 100, height: 10, color: 'blue', speed: 10 });
+    }
+
+    // 게임 루프
+    function gameLoop() {
+      // 이전 프레임 지우기
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      //배경준비
+      background.draw();
+
+      // 플레이어 이동 처리
+      if (keys['ArrowLeft'] && player.x > 0) {
+        player.x -= player.speed;
+      }
+      if (keys['ArrowRight'] && player.x < canvas.width - player.width) {
+        player.x += player.speed;
+      }
+
+      // // 플레이어 그리기
+      // ctx.fillStyle = player.color;
+      // ctx.fillRect(player.x, player.y, player.width, player.height);
+
+
+      // // 상대 플레이어 그리기
+      // ctx.fillStyle = pPlayer.color;
+      // ctx.fillRect(pPlayer.x, pPlayer.y, pPlayer.width, pPlayer.height);
+
+
+      //상대총알 이동 및 그리기
+      for (let i = p_bullets.length - 1; i >= 0; i--) {
+        const bullet = p_bullets[i];
+        bullet.y += bullet.speed;
+        ctx.fillStyle = bullet.color;
+        ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+
+        // 총알이 화면 밖으로 나가면 배열에서 제거
+        if (bullet.y > 500) {
+          p_bullets.splice(i, 1);
+          score = 0;
+        }
+      }
+
+      // 총알 이동 및 그리기
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const bullet = bullets[i];
+        bullet.y -= bullet.speed;
+        // ctx.fillStyle = bullet.color;
+        ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+
+        // 총알이 화면 밖으로 나가면 배열에서 제거
+        if (bullet.y < 100 ) {
+          bullets.splice(i, 1);
+          score = 0;
+        }
+      }
+
+        for (let i = bullets.length - 1; i >= 0; i--) {
+          for (let j = p_bullets.length - 1; j >= 0; j--){
+            const bullet = bullets[i];
+            const sbullet = p_bullets[j];
+            if(bullets[i].y <  p_bullets[j].y && bullets[i].x ==  p_bullets[j].x){
+              score = bullets[i].y
+              console.log(score);
+              bullets.splice(i, 1);
+              p_bullets.splice(j, 1);
+              break;
+            }
+          }
+        } 
+
+
+      ctx.drawImage(tl,0,0);
+
+      // state.draw(score); //state관련 전부 주석처리
+
+      // 게임 루프 반복
+      requestAnimationFrame(gameLoop);
+    }
+
+    // 플레이어 발사 처리
+    function playerShoot() {
+      tickSound.play();
+      const bulletX = player.x ; // 총알 가운데 위치
+      const bulletY = player.y;
+      createBullet(bulletX, bulletY);
+
+      // 총알 발사 시간 로그 출력() 노트찍을때만 작동
+      // const currentTime = new Date().toLocaleTimeString(undefined, { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+      // const [hours, minutes, seconds, milliseconds] = currentTime.split(/[:.]/).map(Number);
+      // // const timeDifference = lastShootTime !== null ? currentTime - lastShootTime : 0;
+      // const minutesDifference = minutes - lastShootMinute;
+      // const secondsDifference = seconds - lastShootSecond;
+      // const millisecondsDifference = milliseconds -  lastShootSsecond;
+      // mmilliseconds = (minutesDifference * 60 * 1000) + (secondsDifference * 1000) + millisecondsDifference;
+      // console.log(`총알이 발사되었습니다. 발사 시간:  ${mmilliseconds} `);
+      // // 이전 발사 시간 갱신
+      // lastShootMinute = minutes;
+      // lastShootSecond = seconds;
+      // lastShootSsecond = milliseconds;
+      note.push(elapsedTime);
+      noteX.push(player.x);
+    }
+
+     // 상대플레이어 발사 처리
+     function pPlayerShoot() {
+      const bulletX = shootingX[shootingIndex-1]; // 총알 가운데 위치
+      const bulletY = pPlayer.y;
+      createPBullet(bulletX, bulletY);
+
+      //자동총알발사
+      const nextInterval = shootingIntervals[shootingIndex]-4;
+      console.log(nextInterval);
+      shootingIndex = (shootingIndex + 1) % shootingIntervals.length;
+      setTimeout(pPlayerShoot, nextInterval);
+    }
+    gameLoop();
+
+
+    // 시작 시간을 밀리초로 설정
+    start.addEventListener('click', (event) => {
+      var Hcanvas = document.getElementById("gameCanvas");
+      Hcanvas.classList.toggle("hidden-canvas"); // 클래스 토글
+
+      console.log(IMusic);
+      const backgroundMusic = document.getElementById(IMusic);
+      backgroundMusic.loop = false; 
+      backgroundMusic.play();
+
+      const startTime = Date.now();
+
+    // 시계 업데이트 함수
+    function updateTimer() {
+        const currentTime = Date.now();
+        elapsedTime = currentTime - startTime;
+
+        // console.log(elapsedTime);
+    
+        // 시간을 표시할 요소 가져오기
+        const timerElement = document.getElementById("timer");
+
+        timerElement.textContent = `${elapsedTime.toString().padStart(6, '0')}`;
+    }
+      backgroundMusic.addEventListener("ended", () => {
+        backgroundMusic.pause();
+        backgroundMusic.currentTime = 0;
+      });
+
+      // 10밀리초마다 시계 업데이트
+      setInterval(updateTimer, 10);
+
+      keydownA = true;
+      console.log(keydownA);
+
+      playerShoot();
+      // pPlayerShoot();
+      console.log('게임시작');
+      }
+    );
+
+    end.addEventListener('click', (event) => {
+      for(let i = note.length - 1; i >= 0; i--){
+        noteSn.push(i);
+      }
+        noteSn.reverse();      
+        console.log(note);
+        console.log(noteX);
+        console.log(noteSn);
+        
+        const result = scores.reduce(function add(sum, currValue) {
+          return sum + currValue;
+          }, 0);
+        console.log(result);
+        
+        var wb = XLSX.utils.book_new();
+
+        // 데이터 생성 (이 예시에서는 간단한 데이터)
+        var data = [
+          note
+        ];
+
+        var data2 = [
+          noteX
+        ];
+
+        var data3 = [
+          noteSn
+        ];
+
+        var data4 = [
+          [IMusic]
+        ];
+
+        // 워크시트 생성
+        var ws = XLSX.utils.aoa_to_sheet(data);
+        var ws2 = XLSX.utils.aoa_to_sheet(data2);
+        var ws3 = XLSX.utils.aoa_to_sheet(data3);
+        var ws4 = XLSX.utils.aoa_to_sheet(data4);
+
+
+        // 워크북에 워크시트 추가
+        XLSX.utils.book_append_sheet(wb, ws, 'note');
+        XLSX.utils.book_append_sheet(wb, ws2, 'noteX');
+        XLSX.utils.book_append_sheet(wb, ws3, 'noteSn');
+        XLSX.utils.book_append_sheet(wb, ws4, 'noteM');
+
+        // Blob 객체 생성
+        var wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        var blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+        // Blob URL 생성
+        var blobUrl = URL.createObjectURL(blob);
+
+        // 링크 생성
+        var link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = 'example.xlsx';
+        link.textContent = 'Download Excel';
+
+        // 문서에 링크 추가
+        document.body.appendChild(link);
+      }
+    );
+
+
+  document.getElementById('internetB').addEventListener('click', function() {
+    const divs = document.querySelectorAll(".checked");
+    divs.forEach(div => {
+        div.classList.remove("checked");
+    });
+    IMusic = 'internet';
+    document.getElementById('internetB').classList.toggle("checked");
+  // 여기에 원하는 동작을 추가할 수 있습니다.
+  });
+
+  document.getElementById('hellB').addEventListener('click', function() {
+    const divs = document.querySelectorAll(".checked");
+    divs.forEach(div => {
+        div.classList.remove("checked");
+    });
+    IMusic = 'hell';
+    document.getElementById('hellB').classList.toggle("checked");
+  // 여기에 원하는 동작을 추가할 수 있습니다.
+  });
+
+  document.getElementById('beB').addEventListener('click', function() {
+    const divs = document.querySelectorAll(".checked");
+    divs.forEach(div => {
+        div.classList.remove("checked");
+    });
+    IMusic = 'be';
+    document.getElementById('beB').classList.toggle("checked");
+  // 여기에 원하는 동작을 추가할 수 있습니다.
+  });
+
+  document.getElementById('beatB').addEventListener('click', function() {
+    const divs = document.querySelectorAll(".checked");
+    divs.forEach(div => {
+        div.classList.remove("checked");
+    });
+    IMusic = 'beat';
+    document.getElementById('beatB').classList.toggle("checked");
+  // 여기에 원하는 동작을 추가할 수 있습니다.
+  });
+
+
+  document.getElementById('ggo').addEventListener("click", function() {
+      // 이동할 URL 설정
+      const targetURL = "https://helpful-sable-16ccb5.netlify.app/gpt2";
+
+      // URL로 이동
+      window.location.href = targetURL;
+    });
+  </script>
+</html>
